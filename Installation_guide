@@ -1,0 +1,33 @@
+pip install typesafe-ai
+import os
+from typesafe import TypeSafeClient
+
+# Initialise client (Uses typesafe.ai or OpenRouter backend gateways)
+client = TypeSafeClient(
+    api_key=os.environ.get("TYPESAFE_API_KEY"),
+    base_url="https://api.typesafe.ai/v1"
+)
+
+# Define your data state and typed criteria questions
+response = client.system_one(
+    model="jev-latest",
+    state="Customer: I was charged twice for my subscription and I am furious.",
+    questions={
+        "topic": {
+            "type": "choice",
+            "instructions": "What is the core issue about?",
+            "criteria": {
+                "billing": "money, charge, invoice, or refund issues",
+                "bug": "broken interface or technical application failure"
+            }
+        },
+        "urgent": {
+            "type": "noul", # "Noul" returns a strict calibrated P(true) float
+            "instructions": "Should this ticket be escalated to a human supervisor immediately?"
+        }
+    }
+)
+
+# Access typed, deterministic attributes instantly without manual string parsing
+print(response.answers.topic.choice)     # Output: 'billing'
+print(response.answers.urgent.noul)       # Output: 0.82 (82% probability threshold)
